@@ -5,11 +5,6 @@ from db.base import DBDriver
 load_dotenv()
 
 def get_driver() -> DBDriver:
-    """
-    Reads DB_TYPE from environment and returns the correct driver instance.
-    Fails fast with a clear error if DB_TYPE is unrecognised or required
-    env vars are missing.
-    """
     db_type = os.getenv("DB_TYPE", "postgres").lower().strip()
 
     if db_type == "postgres":
@@ -24,11 +19,11 @@ def get_driver() -> DBDriver:
 
     elif db_type == "sqlite":
         path = os.getenv("SQLITE_PATH", ":memory:")
-        from db.sqlite import SQLiteDriver  
+        from db.sqlite import SQLiteDriver
         return SQLiteDriver(path=path)
 
     elif db_type == "mysql":
-        from db.mysql import MySQLDriver    
+        from db.mysql import MySQLDriver
         return MySQLDriver(
             host=os.getenv("MYSQL_HOST", "localhost"),
             user=os.getenv("MYSQL_USER"),
@@ -36,8 +31,7 @@ def get_driver() -> DBDriver:
             database=os.getenv("MYSQL_DB"),
         )
 
-    else:
-        raise EnvironmentError(
-            f"Unknown DB_TYPE: '{db_type}'. "
-            f"Valid options: postgres, sqlite, mysql"
-        )
+    raise EnvironmentError(
+        f"Unknown DB_TYPE: '{db_type}'. "
+        f"Valid options: postgres, sqlite, mysql"
+    )
