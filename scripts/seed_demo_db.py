@@ -6,10 +6,11 @@ Creates a SQLite database at the path specified by SQLITE_PATH
 to showcase the optimizer's capabilities.
 
 Deliberately bad design decisions included:
-- orders.customer_id: no index (triggers seq scan on large table)
-- order_items.order_id: no index (triggers seq scan on join)
-- products.name: no index (text search will be slow)
-- orders.created_at: no index (date range queries will be slow)
+- orders.customer_id:      no index (triggers seq scan on large table)
+- order_items.order_id:    no index (triggers seq scan on join)
+- products.name:           no index (text search will be slow)
+- orders.created_at:       no index (date range queries will be slow)
+- product_reviews.product_id: no index (review lookups will be slow)
 
 Run with:
     uv run python scripts/seed_demo_db.py
@@ -21,7 +22,7 @@ import argparse
 import os
 import random
 import sqlite3
-import sys
+import stat
 import time
 from datetime import date, timedelta
 from pathlib import Path
@@ -53,9 +54,21 @@ def generate_date(start_year: int = 2022, end_year: int = 2024) -> str:
 def seed(db_path: str, n_orders: int = 100_000) -> None:
     path = Path(db_path)
 
+    # If file exists and is read-only from a previous seed run,
+    # we need to make it writable before we can remove it
     if path.exists():
+        path.chmod(
+            stat.S_IRUSR | stat.S_IWUSR |
+            stat.S_IRGRP | stat.S_IWGRP
+        )
         print(f"Removing existing DB at {path}")
         path.unlink()
+
+    # remove WAL and SHM sidecar files if they exist
+    for suffix in ["-wal", "-shm"]:
+        sidecar = Path(db_path + suffix)
+        if sidecar.exists():
+            sidecar.unlink()
 
     print(f"Creating demo DB at {path}")
     conn = sqlite3.connect(db_path)
@@ -114,9 +127,9 @@ def seed(db_path: str, n_orders: int = 100_000) -> None:
         );
 
         -- Intentionally missing indexes (demo targets):
-        --   orders.customer_id      → slow customer order lookups
-        --   orders.created_at       → slow date range queries
-        --   order_items.order_id    → slow order detail lookups
+        --   orders.customer_id         → slow customer order lookups
+        --   orders.created_at          → slow date range queries
+        --   order_items.order_id       → slow order detail lookups
         --   product_reviews.product_id → slow review lookups
 
         -- Intentionally present indexes (demo contrast):
@@ -163,7 +176,7 @@ def seed(db_path: str, n_orders: int = 100_000) -> None:
         products.append((
             f"{cat} Product {i}",
             cat,
-            random.randint(499, 99999),   # 4.99 to 999.99
+            random.randint(499, 99999),
             random.randint(0, 500),
             generate_date(2020, 2022),
         ))
@@ -195,7 +208,6 @@ def seed(db_path: str, n_orders: int = 100_000) -> None:
             shipped,
         ))
 
-    # Insert in batches to avoid memory issues
     batch = 10_000
     for start in range(0, n_orders, batch):
         cursor.executemany(
@@ -209,10 +221,9 @@ def seed(db_path: str, n_orders: int = 100_000) -> None:
     print(f"  done in {time.perf_counter() - t:.1f}s")
 
     # ------------------------------------------------------------------
-    # Order items — ~3 items per order
+    # Order items — 1 to 5 items per order
     # ------------------------------------------------------------------
-    n_items = n_orders * 3
-    print(f"Seeding ~{n_items:,} order items...")
+    print(f"Seeding order items (~3 per order)...")
     t = time.perf_counter()
 
     items = []
@@ -264,23 +275,32 @@ def seed(db_path: str, n_orders: int = 100_000) -> None:
     )
     print(f"  done in {time.perf_counter() - t:.1f}s")
 
+    # ------------------------------------------------------------------
+    # Commit and close BEFORE setting permissions
+    # ------------------------------------------------------------------
     conn.commit()
 
-    # ------------------------------------------------------------------
-    # Print summary
-    # ------------------------------------------------------------------
     print("\nDatabase summary:")
-    for table in ["customers", "products", "orders", "order_items", "product_reviews"]:
+    for table in [
+        "customers", "products", "orders",
+        "order_items", "product_reviews",
+    ]:
         row = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()
-        print(f"  {table:<20} {row[0]:>10,} rows")
+        print(f"  {table:<25} {row[0]:>10,} rows")
 
     conn.close()
-    print(f"\nDemo DB ready at: {path.resolve()}")
+
+    # ------------------------------------------------------------------
+    # Set read-only AFTER all writes are complete and connection closed
+    # ------------------------------------------------------------------
+    path.chmod(stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+    print(f"\nSet {path} to read-only (chmod 444)")
+    print(f"Demo DB ready at: {path.resolve()}")
     print("\nSlow demo queries to try:")
-    print("  SELECT * FROM orders WHERE customer_id = 42")
-    print("  SELECT * FROM orders WHERE created_at BETWEEN '2023-01-01' AND '2023-12-31'")
-    print("  SELECT * FROM order_items WHERE order_id = 1")
-    print("  SELECT * FROM product_reviews WHERE product_id = 10")
+    print("  SELECT * FROM orders o WHERE o.customer_id = 42")
+    print("  SELECT * FROM orders o WHERE o.created_at BETWEEN '2023-01-01' AND '2023-12-31'")
+    print("  SELECT * FROM order_items oi WHERE oi.order_id = 1")
+    print("  SELECT * FROM product_reviews pr WHERE pr.product_id = 10")
 
 
 if __name__ == "__main__":
