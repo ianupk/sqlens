@@ -83,7 +83,7 @@ FastMCP server
 **Prerequisites:** Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-git clone https://github.com/sql-optimizer-mcp
+git clone https://github.com/ianupk/sql-optimizer-mcp
 cd sql-optimizer-mcp
 uv sync --dev
 
@@ -119,6 +119,7 @@ The server uses **stdio** — your client launches it as a subprocess. No ports,
 ```
 
 > **Where to put this:**
+>
 > - **Cursor:** Settings → MCP → Add new server
 > - **Claude Desktop (macOS):** `~/Library/Application Support/Claude/claude_desktop_config.json`
 > - **Claude Desktop (Windows):** `%APPDATA%\Claude\claude_desktop_config.json`

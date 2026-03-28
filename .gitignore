@@ -19,10 +19,13 @@ audit.log
 # DB files
 *.db
 *.sqlite
+*.db-shm
+*.db-wal
 
 # IDE
 .vscode/settings.json
 .idea/
+.cursor/mcp.json
 
 # OS
 .DS_Store
