@@ -1,0 +1,19 @@
+{
+    "servers": {
+        "sql-optimizer": {
+            "type": "stdio",
+            "command": "uv",
+            "args": [
+                "run",
+                "python",
+                "-m",
+                "mcp_server.server"
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "DB_TYPE": "sqlite",
+                "SQLITE_PATH": "${workspaceFolder}/demo.db"
+            }
+        }
+    }
+}

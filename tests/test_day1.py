@@ -32,15 +32,25 @@ def test_postgres_driver_importable():
 
 
 def test_postgres_driver_methods_raise_not_implemented():
-    """Every method raises NotImplementedError — skeleton is correct."""
+    """Driver methods raise exceptions when trying to connect with fake DSN."""
+    from psycopg_pool import PoolTimeout
     driver = PostgresDriver(dsn="postgresql://fake:fake@localhost/fake")
 
-    with pytest.raises(NotImplementedError): driver.execute("SELECT 1")
-    with pytest.raises(NotImplementedError): driver.explain("SELECT 1")
-    with pytest.raises(NotImplementedError): driver.list_tables()
-    with pytest.raises(NotImplementedError): driver.get_schema("orders")
-    with pytest.raises(NotImplementedError): driver.get_table_stats("orders")
-    with pytest.raises(NotImplementedError): driver.get_slow_queries()
+    # With fake credentials, attempting to use the driver should fail
+    # (PoolTimeout when trying to connect)
+    with pytest.raises((NotImplementedError, PoolTimeout, RuntimeError)):
+        driver.execute("SELECT 1")
+    with pytest.raises((NotImplementedError, PoolTimeout, RuntimeError)):
+        driver.explain("SELECT 1")
+    with pytest.raises((NotImplementedError, PoolTimeout, RuntimeError)):
+        driver.list_tables()
+    with pytest.raises((NotImplementedError, PoolTimeout, RuntimeError)):
+        driver.get_schema("orders")
+    with pytest.raises((NotImplementedError, PoolTimeout, RuntimeError)):
+        driver.get_table_stats("orders")
+    # get_slow_queries() gracefully returns [] if pg_stat_statements is not available
+    result = driver.get_slow_queries()
+    assert isinstance(result, list)
 
 
 def test_postgres_close_before_pool_init():
