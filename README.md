@@ -1,114 +1,174 @@
-# SQL Optimizer MCP Server
+<p align="center">
+  <img src="assets/banner.png" alt="SQL Optimizer MCP Server" width="800" />
+</p>
 
-An MCP (Model Context Protocol) server that gives any MCP-compatible
-AI assistant live, read-only access to your database for query
-explanation, performance analysis, and index optimization.
+<p align="center">
+  <strong>An MCP server that gives AI assistants direct, safe access to your database for query analysis, optimization, and index recommendations.</strong>
+</p>
 
-Works with any LLM that supports MCP — VS Code with GitHub Copilot,
-Cursor, Claude Desktop, or any other MCP-compatible client.
-
----
-
-## What it does
-
-Ask your AI assistant questions like:
-
-- *"Why is this query slow?"*
-  → The server runs EXPLAIN, identifies sequential scans, and returns
-  an annotated plan with severity scores. The assistant explains the
-  bottleneck in plain English.
-
-- *"What indexes should I add?"*
-  → The server walks the query's AST using sqlglot, extracts columns
-  used in WHERE, JOIN, and ORDER BY, cross-references existing indexes,
-  and returns copy-paste ready `CREATE INDEX CONCURRENTLY` statements.
-
-- *"Rewrite this for keyset pagination"*
-  → The server fetches the EXPLAIN plan and schema context, then
-  provides the assistant with structured guidance to rewrite the
-  query and show the plan improvement.
-
-- *"Is this table healthy?"*
-  → The server reads live stats (vacuum age, dead tuples, cache hit
-  ratio) and returns actionable health flags.
+<p align="center">
+  <img src="https://img.shields.io/badge/python-≥3.11-blue?logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/MCP-1.0-green?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+PHRleHQgeD0iNCIgeT0iMjAiIGZvbnQtc2l6ZT0iMjAiPuKalDwvdGV4dD48L3N2Zz4=" alt="MCP" />
+  <img src="https://img.shields.io/badge/databases-postgres%20%7C%20sqlite%20%7C%20mysql-orange" alt="Databases" />
+  <img src="https://img.shields.io/badge/license-MIT-gray" alt="License" />
+</p>
 
 ---
 
-## Architecture
+## What is this?
 
-```
-MCP client (VS Code / Cursor / Claude Desktop / any MCP host)
-      ↓  stdio
-FastMCP server
-      ↓
-┌──────────────────────────────────────────────┐
-│  tools/            Business logic            │
-│    query.py        run_query, explain_query  │
-│    schema.py       list_tables, get_schema   │
-│                    get_table_stats,          │
-│                    get_slow_queries          │
-│    optimizer.py    suggest_indexes,          │
-│                    rewrite_query             │
-├──────────────────────────────────────────────┤
-│  middleware/       Cross-cutting concerns    │
-│    safety.py       sqlglot AST sanitizer     │
-│    audit.py        JSONL audit log           │
-├──────────────────────────────────────────────┤
-│  db/               Database drivers          │
-│    postgres.py     psycopg3 + pg_catalog     │
-│    sqlite.py       stdlib sqlite3            │
-│    mysql.py        mysql-connector           │
-└──────────────────────────────────────────────┘
-```
+SQL Optimizer MCP is a [Model Context Protocol](https://modelcontextprotocol.io/) server that connects AI coding assistants (Cursor, VS Code Copilot, Claude Desktop) to a live database. The AI can then:
+
+- **Run read-only queries** and inspect results
+- **Analyze execution plans** with severity-based diagnostics (slow / warn / ok)
+- **Suggest indexes** with copy-paste-ready `CREATE INDEX` statements
+- **Rewrite queries** for better performance
+- **Inspect schemas, stats, and slow query logs**
+
+It also ships with a **web UI** — a dark-themed SQL editor with an interactive execution plan tree visualizer.
+
+## Features
+
+### 🔧 8 MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_tables` | List all tables with row estimates and sizes |
+| `get_schema` | Full column, index, and foreign key details for any table |
+| `run_query` | Execute read-only SELECT queries (writes are blocked) |
+| `explain_query` | Annotated EXPLAIN plan with severity scores and plain-English summaries |
+| `suggest_indexes` | AST-based index recommendations with `CREATE INDEX CONCURRENTLY` DDL |
+| `rewrite_query` | Structured query rewrite workflow with context gathering |
+| `get_table_stats` | Table health: row counts, vacuum status, cache hit ratio |
+| `get_slow_queries` | Slowest queries from `pg_stat_statements` (Postgres) |
+
+### 🛡️ Safety Layer
+
+Every SQL query passes through a multi-layer safety system before execution:
+
+- **AST parsing** via `sqlglot` — blocks INSERT, UPDATE, DELETE, DROP, ALTER, and 20+ dangerous functions
+- **Regex pre-filter** — catches write keywords even if the parser is bypassed
+- **Single-statement enforcement** — no multi-statement injection
+- **SELECT INTO blocking** — prevents silent data exfiltration
+- **Table name validation** — regex guard against SQL injection in schema endpoints
+- **Audit logging** — every tool call logged with inputs, outputs, and timing
+
+### 🖥️ Web UI
+
+A Next.js frontend with:
+
+- **Monaco SQL editor** with syntax highlighting and line numbers
+- **Interactive plan tree** — D3-powered node graph with severity-based color coding (red = slow, yellow = warn, green = ok)
+- **Resizable split layout** — drag the handle to balance editor and results
+- **Results table, Explain Plan, and Index Suggestions** — all in tabbed panels
+
+### 🗄️ Multi-Database Support
+
+| Database | Query | Explain | Schema | Stats | Slow Queries |
+|----------|-------|---------|--------|-------|--------------|
+| **PostgreSQL** | ✅ | ✅ JSON tree | ✅ | ✅ Full | ✅ pg_stat_statements |
+| **SQLite** | ✅ | ✅ Flat plan | ✅ | ⚠️ Limited | ❌ Not available |
+| **MySQL** | ✅ | ✅ Tabular | ✅ | ⚠️ Limited | ❌ Not available |
 
 ---
 
-## Tools
+## Quick Start
 
-| Tool | What it does |
-|---|---|
-| `list_tables` | All tables with row estimates and sizes |
-| `get_schema` | Columns, indexes, foreign keys for a table |
-| `run_query` | Execute a read-only SELECT query |
-| `explain_query` | Annotated EXPLAIN plan with severity scores |
-| `suggest_indexes` | AST-based index suggestions with DDL |
-| `get_table_stats` | Vacuum age, dead tuples, cache hit ratio |
-| `get_slow_queries` | Slowest queries from pg_stat_statements |
-| `rewrite_query` | Structured rewrite with plan comparison |
+### Prerequisites
 
----
+- **Python 3.11+**
+- **[uv](https://docs.astral.sh/uv/)** — fast Python package manager
+- **Node.js 18+** — for the web UI (optional)
 
-## Quickstart
-
-**Prerequisites:** Python 3.11+ and [uv](https://docs.astral.sh/uv/).
+### 1. Clone and install
 
 ```bash
-git clone https://github.com/ianupk/sql-optimizer-mcp
+git clone https://github.com/ianupk/sql-optimizer-mcp.git
 cd sql-optimizer-mcp
-uv sync --dev
-
-# Seed a demo SQLite database and verify everything works
-uv run python scripts/seed_demo_db.py
-uv run python scripts/run_demo.py
+uv sync
 ```
+
+### 2. Configure your database
+
+Copy the example env and edit it:
+
+```bash
+cp .env.example .env
+```
+
+**SQLite** (quickest — comes with a demo database):
+
+```env
+DB_TYPE=sqlite
+SQLITE_PATH=./demo.db
+```
+
+**PostgreSQL**:
+
+```env
+DB_TYPE=postgres
+DATABASE_URL=postgresql://readonly_user:password@localhost:5432/your_db
+```
+
+**MySQL**:
+
+```env
+DB_TYPE=mysql
+MYSQL_HOST=localhost
+MYSQL_USER=readonly_user
+MYSQL_PASSWORD=password
+MYSQL_DB=your_db
+```
+
+> **Tip:** Always use a read-only database user. The safety layer blocks writes, but defense-in-depth never hurts.
+
+### 3. Seed the demo database (optional)
+
+If you want to try it out with sample data (5 tables, ~400k rows):
+
+```bash
+uv run python scripts/seed_demo_db.py
+```
+
+This creates `demo.db` with `customers`, `orders`, `order_items`, `products`, and `product_reviews`.
 
 ---
 
-## Connect your MCP client
+## Usage
 
-The server uses **stdio** — your client launches it as a subprocess. No ports, no network config.
+### As an MCP Server (AI Assistant)
 
-**VS Code (Copilot):** Already configured — open the project and run Command Palette → `MCP: List Servers`.
+#### Cursor / VS Code
 
-**Cursor / Claude Desktop / others:** Add the following server config (update paths):
+Add to your `.cursor/mcp.json` or VS Code MCP settings:
+
+```json
+{
+  "mcpServers": {
+    "sql-optimizer": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "python", "-m", "mcp_server.server"],
+      "cwd": "/path/to/sql-optimizer-mcp",
+      "env": {
+        "DB_TYPE": "sqlite",
+        "SQLITE_PATH": "${workspaceFolder}/demo.db"
+      }
+    }
+  }
+}
+```
+
+#### Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
     "sql-optimizer": {
       "command": "uv",
-      "args": ["run", "python", "-m", "mcp_server.server"],
-      "cwd": "/path/to/sql-optimizer-mcp",
+      "args": ["run", "--directory", "/path/to/sql-optimizer-mcp", "python", "-m", "mcp_server.server"],
       "env": {
         "DB_TYPE": "sqlite",
         "SQLITE_PATH": "/path/to/sql-optimizer-mcp/demo.db"
@@ -118,217 +178,110 @@ The server uses **stdio** — your client launches it as a subprocess. No ports,
 }
 ```
 
-> **Where to put this:**
->
-> - **Cursor:** Settings → MCP → Add new server
-> - **Claude Desktop (macOS):** `~/Library/Application Support/Claude/claude_desktop_config.json`
-> - **Claude Desktop (Windows):** `%APPDATA%\Claude\claude_desktop_config.json`
-
----
-
-## Database configuration
-
-Set via `env` in your client config or in a `.env` file.
-
-| Database | Variables |
-|---|---|
-| SQLite | `DB_TYPE=sqlite` `SQLITE_PATH=./demo.db` |
-| PostgreSQL | `DB_TYPE=postgres` `DATABASE_URL=postgresql://user:pass@host:5432/db` |
-| MySQL | `DB_TYPE=mysql` `MYSQL_HOST=…` `MYSQL_USER=…` `MYSQL_PASSWORD=…` `MYSQL_DB=…` |
-
----
-
-## PostgreSQL read-only setup
-
-Always connect as a read-only role. This is the most important
-security step — it enforces read-only access at the database level,
-independent of any application-level controls.
-
-```sql
-CREATE USER readonly_user WITH PASSWORD 'yourpassword';
-
-GRANT CONNECT ON DATABASE yourdb TO readonly_user;
-GRANT USAGE ON SCHEMA public TO readonly_user;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_user;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public
-    GRANT SELECT ON TABLES TO readonly_user;
-
--- For get_slow_queries() support:
-CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
-```
-
----
-
-## Demo walkthrough
-
-**1. Find why a query is slow**
-
-```
-Why is this query slow?
-SELECT * FROM orders o WHERE o.customer_id = 42
-```
-
-The server detects a full table scan on 100k rows and suggests:
-
-```sql
-CREATE INDEX CONCURRENTLY idx_orders_customer_id ON orders (customer_id);
-```
-
-**2. Optimize a JOIN**
-
-```
-Optimize this query:
-SELECT c.first_name, COUNT(o.id)
-FROM customers c
-JOIN orders o ON o.customer_id = c.id
-WHERE c.country = 'IN'
-GROUP BY c.id
-```
-
-The server checks schemas for both tables, identifies the unindexed
-foreign key, and suggests indexes for both the join column and the
-filter column.
-
-**3. Rewrite for pagination**
-
-```
-Rewrite this to use keyset pagination:
-SELECT * FROM orders ORDER BY id LIMIT 20 OFFSET 10000
-```
-
-The server provides context and guidance. The assistant rewrites to
-`WHERE id > :last_seen_id ORDER BY id LIMIT 20` and explains why
-OFFSET degrades at scale.
-
-**4. Check table health**
-
-```
-Is the orders table in good health?
-```
-
-The server returns live statistics and flags issues like stale
-statistics, excessive dead tuples, or low cache hit ratio with
-specific maintenance commands to run.
-
----
-
-## Security model
-
-### Write protection
-
-**Layer 1 — SQL sanitizer (built in, always active):**
-`middleware/safety.py` parses every SQL string with sqlglot and
-rejects anything that is not a pure SELECT. INSERT, UPDATE, DELETE,
-DROP, TRUNCATE, COPY, and dangerous functions like `pg_read_file`
-are blocked before the database is ever touched.
-
-**Layer 2 — Database permissions (your responsibility):**
-The sanitizer protects against writes that come through this server.
-It does not protect against anything that connects to your database
-through a different path — another client, a shell tool, or an agent
-that decides to go around MCP entirely.
-
-The only reliable protection against that is enforcing read-only
-access at the database level, independent of this server:
-
-- **PostgreSQL / MySQL:** connect as a role that has only SELECT
-  privilege. Even if someone connects directly with `psql` or a
-  GUI client, the database rejects any write at the engine level.
-  See the PostgreSQL read-only setup section above.
-
-- **SQLite:** set the file to read-only after seeding:
-  `chmod 444 yourdb.db`. The OS blocks writes before SQLite
-  processes them, regardless of how the connection was made.
-
-This is not optional if you are pointing this server at a database
-you care about. Application-level controls are a useful first
-filter — they give you clear error messages and audit log entries.
-But they are not a security boundary. Database-level permissions
-are the actual hard stop.
-
-### Audit log
-
-Every tool call is recorded to `audit.log` in JSONL format:
-
-```json
-{
-  "ts": "2024-11-15T10:23:41.123Z",
-  "tool": "explain_query",
-  "inputs": {"sql": "SELECT * FROM orders WHERE customer_id = 42"},
-  "reason": "User asked why this query is slow",
-  "status": "ok",
-  "duration_ms": 4.2,
-  "result": "{\"has_seq_scan\": true, \"summary\": \"Full table scan...\"}"
-}
-```
-
----
-
-## Running tests
+#### Run standalone (for testing)
 
 ```bash
-uv run pytest -v                       # full suite
-uv run pytest tests/test_safety.py    # safety layer
-uv run pytest tests/test_optimizer.py # index suggestions
-uv run pytest tests/test_drivers.py   # database drivers
+uv run python -m mcp_server.server
 ```
+
+The server communicates over **stdio** using the MCP protocol.
 
 ---
 
-## Project structure
+### Web UI
+
+Start the backend API and frontend:
+
+```bash
+# Terminal 1 — API server (FastAPI)
+uv run uvicorn api.main:app --reload --port 8000
+
+# Terminal 2 — Frontend (Next.js)
+cd frontend
+npm install
+npm run dev
+```
+
+Open **<http://localhost:3000>** — you'll see the SQL editor, table sidebar, and plan visualizer.
+
+---
+
+## Architecture
 
 ```
 sql-optimizer-mcp/
-├── db/                   Database drivers (Postgres, SQLite, MySQL)
-│   ├── base.py           DBDriver abstract interface + dataclasses
-│   ├── plan_parser.py    EXPLAIN JSON parser with severity scoring
-│   ├── postgres.py       psycopg3 driver
-│   ├── sqlite.py         sqlite3 driver
-│   └── mysql.py          mysql-connector driver
+├── mcp_server/          # MCP server entry point (stdio transport)
+│   └── server.py        # Tool registration + system prompt
+├── api/                 # REST API (FastAPI) for the web UI
+│   ├── main.py          # App setup, CORS, routing
+│   ├── dependencies.py  # Lazy driver + tool initialization
+│   └── routes/          # HTTP endpoints → tool functions
+├── tools/               # Core business logic
+│   ├── query.py         # run_query, explain_query
+│   ├── schema.py        # list_tables, get_schema, get_table_stats, get_slow_queries
+│   └── optimizer.py     # suggest_indexes, rewrite_query (AST analysis)
+├── db/                  # Database drivers
+│   ├── base.py          # Abstract interface + data classes
+│   ├── factory.py       # Driver factory (reads DB_TYPE from env)
+│   ├── sqlite.py        # SQLite driver
+│   ├── postgres.py      # PostgreSQL driver (psycopg3)
+│   ├── mysql.py         # MySQL driver
+│   └── plan_parser.py   # EXPLAIN output → annotated plan tree
 ├── middleware/
-│   ├── safety.py         sqlglot AST sanitizer (6 defence layers)
-│   └── audit.py          @audit_tool decorator, JSONL logging
-├── tools/
-│   ├── query.py          run_query, explain_query
-│   ├── schema.py         list_tables, get_schema, stats tools
-│   └── optimizer.py      suggest_indexes, rewrite_query
-├── mcp_server/
-│   └── server.py         FastMCP entry point, system prompt
-├── scripts/
-│   ├── seed_demo_db.py   Creates demo.db with realistic data
-│   └── run_demo.py       Exercises every tool end-to-end
-└── tests/                pytest suite (~100 tests)
+│   ├── safety.py        # SQL sanitization (sqlglot AST + regex)
+│   └── audit.py         # JSONL audit logging decorator
+├── frontend/            # Next.js web UI
+│   ├── components/      # SqlEditor, PlanTree, ResizableSplit
+│   └── lib/api.ts       # Frontend API client
+└── scripts/
+    └── seed_demo_db.py  # Generate demo data
+```
+
+### Data Flow
+
+```
+User (AI or Web UI)
+  → SQL query
+  → middleware/safety.py (sanitize + block writes)
+  → tools/query.py (run_query or explain_query)
+  → db/{sqlite,postgres,mysql}.py (execute against DB)
+  → db/plan_parser.py (annotate plan with severity)
+  → middleware/audit.py (log to audit.log)
+  → Response (results / plan tree / suggestions)
 ```
 
 ---
 
-## Extending
+## Example Queries
 
-**Add a new tool:**
+Once connected, ask your AI assistant:
 
-1. Write the function in `tools/` and decorate with `@audit_tool`
-2. Register it in `mcp_server/server.py`
-3. Add tests in `tests/`
+```
+"What tables exist in the database?"
+"Show me orders for customer 42"
+"Why is this query slow? SELECT * FROM orders WHERE status = 'pending'"
+"Suggest indexes for this query"
+"Rewrite this query to be faster"
+```
 
-**Add a new database driver:**
-
-1. Implement the `DBDriver` ABC in `db/`
-2. Add a case to `db/factory.py`
-3. Handle dialect differences in `db/plan_parser.py`
-
-**Add the HTTP layer (FastAPI):**
-The tool functions in `tools/` are plain Python functions — any
-FastAPI route can call them directly with the same driver instance.
-No refactoring required.
+Or paste a complex query in the web UI editor and click **Explain Plan** to see the visual tree.
 
 ---
 
-## Tech stack
+## Configuration Reference
 
-| Component | Technology |
-|---|---|
-| MCP framework | FastMCP |
-| Postgres driver | psycopg3 |
-| SQL parser / sanitizer | sqlglot |
-| Package manager | uv |
-| Testing | pytest |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DB_TYPE` | Yes | `postgres` | Database type: `postgres`, `sqlite`, or `mysql` |
+| `DATABASE_URL` | If Postgres | — | PostgreSQL connection string |
+| `SQLITE_PATH` | If SQLite | `:memory:` | Path to SQLite database file |
+| `MYSQL_HOST` | If MySQL | `localhost` | MySQL server hostname |
+| `MYSQL_USER` | If MySQL | — | MySQL username |
+| `MYSQL_PASSWORD` | If MySQL | — | MySQL password |
+| `MYSQL_DB` | If MySQL | — | MySQL database name |
+
+---
+
+## License
+
+MIT

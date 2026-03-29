@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="glow-strong">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="400" fill="url(#bg)"/>
+
+  <!-- Tree diagram -->
+  <g transform="translate(300, 200)" filter="url(#glow)">
+    <!-- Lines -->
+    <line x1="0" y1="-80" x2="-80" y2="0" stroke="#22d3ee" stroke-width="2" opacity="0.8"/>
+    <line x1="0" y1="-80" x2="80" y2="0" stroke="#22d3ee" stroke-width="2" opacity="0.8"/>
+    <line x1="-80" y1="0" x2="-120" y2="80" stroke="#22d3ee" stroke-width="2" opacity="0.6"/>
+    <line x1="-80" y1="0" x2="-40" y2="80" stroke="#22d3ee" stroke-width="2" opacity="0.6"/>
+    <line x1="80" y1="0" x2="40" y2="80" stroke="#22d3ee" stroke-width="2" opacity="0.6"/>
+    <line x1="80" y1="0" x2="120" y2="80" stroke="#22d3ee" stroke-width="2" opacity="0.6"/>
+
+    <!-- Root node (circle) -->
+    <circle cx="0" cy="-80" r="14" fill="none" stroke="#22d3ee" stroke-width="2.5" filter="url(#glow-strong)"/>
+    <circle cx="0" cy="-80" r="4" fill="#22d3ee" opacity="0.6"/>
+
+    <!-- Level 2 nodes (squares) -->
+    <rect x="-92" y="-12" width="24" height="24" rx="4" fill="none" stroke="#22d3ee" stroke-width="2" opacity="0.9"/>
+    <rect x="68" y="-12" width="24" height="24" rx="4" fill="none" stroke="#22d3ee" stroke-width="2" opacity="0.9"/>
+
+    <!-- Level 3 nodes (squares) -->
+    <rect x="-132" y="68" width="24" height="24" rx="4" fill="none" stroke="#22d3ee" stroke-width="2" opacity="0.7"/>
+    <rect x="-52" y="68" width="24" height="24" rx="4" fill="none" stroke="#22d3ee" stroke-width="2" opacity="0.7"/>
+    <rect x="28" y="68" width="24" height="24" rx="4" fill="none" stroke="#22d3ee" stroke-width="2" opacity="0.7"/>
+    <rect x="108" y="68" width="24" height="24" rx="4" fill="none" stroke="#22d3ee" stroke-width="2" opacity="0.7"/>
+  </g>
+
+  <!-- Title -->
+  <text x="700" y="190" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="48" font-weight="700" fill="#ffffff" text-anchor="middle">SQL Optimizer MCP Server</text>
+
+  <!-- Subtitle -->
+  <text x="700" y="240" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="22" font-weight="400" fill="#8b949e" text-anchor="middle">AI-Powered Query Analysis &amp; Optimization</text>
+</svg>
