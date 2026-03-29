@@ -66,6 +66,7 @@ export async function runQuery(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sql, limit, reason: "web UI query" }),
     });
+    if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
     return res.json();
 }
 
@@ -77,11 +78,13 @@ export async function explainQuery(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sql, analyze: false, reason: "web UI explain" }),
     });
+    if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
     return res.json();
 }
 
 export async function listTables(): Promise<TableInfo[]> {
     const res = await fetch(`${BASE}/schema/tables`);
+    if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
     const data = await res.json();
     return data.tables ?? [];
 }
@@ -94,5 +97,6 @@ export async function suggestIndexes(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sql, reason: "web UI suggest indexes" }),
     });
+    if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
     return res.json();
 }

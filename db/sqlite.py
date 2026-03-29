@@ -1,5 +1,6 @@
 import sqlite3
 import time
+import re
 from pathlib import Path
 
 from db.base import (
@@ -14,6 +15,13 @@ from db.base import (
     ForeignKeyInfo,
 )
 
+# Guard against SQL injection in table/index names
+_SAFE_NAME = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+def _validate_name(name: str, kind: str = "table") -> str:
+    if not _SAFE_NAME.match(name):
+        raise ValueError(f"Invalid {kind} name: '{name}'")
+    return name
 
 class SQLiteDriver(DBDriver):
     """
@@ -178,6 +186,7 @@ class SQLiteDriver(DBDriver):
 
         # Fallback: COUNT(*) — slower but always works
         try:
+            _validate_name(table)
             cursor = self._conn.execute(f"SELECT COUNT(*) as n FROM {table}")
             row = cursor.fetchone()
             return row["n"] if row else 0
@@ -215,6 +224,7 @@ class SQLiteDriver(DBDriver):
         )
 
     def _get_columns(self, table: str) -> list[ColumnInfo]:
+        _validate_name(table)
         cursor = self._conn.execute(f"PRAGMA table_info({table})")
         rows = cursor.fetchall()
         return [
@@ -229,6 +239,7 @@ class SQLiteDriver(DBDriver):
         ]
 
     def _get_indexes(self, table: str) -> list[IndexInfo]:
+        _validate_name(table)
         cursor = self._conn.execute(f"PRAGMA index_list({table})")
         index_rows = cursor.fetchall()
 
@@ -236,7 +247,7 @@ class SQLiteDriver(DBDriver):
         for idx in index_rows:
             # Get columns in this index
             col_cursor = self._conn.execute(
-                f"PRAGMA index_info({idx['name']})"
+                f"PRAGMA index_info({_validate_name(idx['name'], 'index')})"
             )
             col_rows = col_cursor.fetchall()
             columns = [c["name"] for c in sorted(col_rows, key=lambda r: r["seqno"])]
@@ -251,6 +262,7 @@ class SQLiteDriver(DBDriver):
         return indexes
 
     def _get_foreign_keys(self, table: str) -> list[ForeignKeyInfo]:
+        _validate_name(table)
         cursor = self._conn.execute(f"PRAGMA foreign_key_list({table})")
         rows = cursor.fetchall()
         return [
