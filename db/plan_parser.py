@@ -298,21 +298,30 @@ def _build_postgres_summary(
 # ---------------------------------------------------------------------------
 
 def _parse_sqlite_plan(plan_rows: list[dict]) -> ParsedPlan:
+    """
+    Build a proper tree from SQLite EXPLAIN QUERY PLAN rows.
+
+    Each row has: id, parent, notused, detail.
+    We use id/parent to reconstruct the hierarchy so the frontend
+    gets a nested tree (not a flat list).
+    """
     if not plan_rows:
         return _empty_plan("sqlite")
 
-    nodes            = []
-    has_seq_scan     = False
-    has_bad_estimate = False
+    has_seq_scan = False
+
+    # Step 1: Create annotated nodes keyed by their id
+    node_by_id: dict[int, PlanNodeAnnotated] = {}
 
     for row in plan_rows:
-        detail    = row.get("detail", "")
+        row_id = row.get("id", 0)
+        detail = row.get("detail", "")
         node_type, severity, reason = _score_sqlite_row(detail)
 
         if severity == SEVERITY_SLOW:
             has_seq_scan = True
 
-        nodes.append(PlanNodeAnnotated(
+        node = PlanNodeAnnotated(
             node_type=node_type,
             severity=severity,
             startup_cost=None,
@@ -331,14 +340,28 @@ def _parse_sqlite_plan(plan_rows: list[dict]) -> ParsedPlan:
             reason=reason,
             children=[],
             raw=row,
-        ))
+        )
+        node_by_id[row_id] = node
 
-    slow_nodes = [n for n in nodes if n.severity == SEVERITY_SLOW]
-    summary    = _build_sqlite_summary(nodes, has_seq_scan)
+    # Step 2: Wire children to parents using the parent column
+    roots: list[PlanNodeAnnotated] = []
+    for row in plan_rows:
+        row_id = row.get("id", 0)
+        parent_id = row.get("parent", 0)
+        node = node_by_id[row_id]
+
+        if parent_id in node_by_id and parent_id != row_id:
+            node_by_id[parent_id].children.append(node)
+        else:
+            roots.append(node)
+
+    all_nodes = list(node_by_id.values())
+    slow_nodes = [n for n in all_nodes if n.severity == SEVERITY_SLOW]
+    summary = _build_sqlite_summary(all_nodes, has_seq_scan)
 
     return ParsedPlan(
         dialect="sqlite",
-        nodes=nodes,
+        nodes=roots,
         total_cost=None,
         slowest_nodes=slow_nodes[:3],
         has_seq_scan=has_seq_scan,

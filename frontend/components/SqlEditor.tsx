@@ -19,9 +19,12 @@ interface Props {
 export default function SqlEditor({ value, onChange, onRun, loading }: Props) {
     return (
         <div style={{
-            border: "1px solid var(--border)",
+            border: "1px solid #2a2d3a",
             borderRadius: "8px",
             overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
         }}>
             {/* Toolbar */}
             <div style={{
@@ -29,17 +32,18 @@ export default function SqlEditor({ value, onChange, onRun, loading }: Props) {
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: "8px 12px",
-                background: "var(--surface)",
-                borderBottom: "1px solid var(--border)",
+                background: "#1a1d27",
+                borderBottom: "1px solid #2a2d3a",
+                flexShrink: 0,
             }}>
-                <span style={{ color: "var(--muted)", fontSize: 12 }}>
+                <span style={{ color: "#64748b", fontSize: 12 }}>
                     SQL Editor — {"\u2318"}Enter to run
                 </span>
                 <button
                     onClick={onRun}
                     disabled={loading}
                     style={{
-                        background: loading ? "var(--border)" : "var(--blue)",
+                        background: loading ? "#2a2d3a" : "#3b82f6",
                         color: "#fff",
                         border: "none",
                         borderRadius: "6px",
@@ -53,31 +57,32 @@ export default function SqlEditor({ value, onChange, onRun, loading }: Props) {
                 </button>
             </div>
 
-            {/* Monaco */}
-            <MonacoEditor
-                height="180px"
-                language="sql"
-                theme="vs-dark"
-                value={value}
-                onChange={(v) => onChange(v ?? "")}
-                onMount={(editor, monaco) => {
-                    // Cmd+Enter / Ctrl+Enter runs the query
-                    editor.addCommand(
-                        monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-                        onRun,
-                    );
-                }}
-                options={{
-                    fontSize: 14,
-                    minimap: { enabled: false },
-                    lineNumbers: "off",
-                    scrollBeyondLastLine: false,
-                    wordWrap: "on",
-                    padding: { top: 12, bottom: 12 },
-                    renderLineHighlight: "none",
-                    overviewRulerLanes: 0,
-                }}
-            />
+            {/* Monaco — fills remaining space */}
+            <div style={{ flex: 1, minHeight: 0 }}>
+                <MonacoEditor
+                    height="100%"
+                    language="sql"
+                    theme="vs-dark"
+                    value={value}
+                    onChange={(v) => onChange(v ?? "")}
+                    onMount={(editor, monaco) => {
+                        editor.addCommand(
+                            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+                            onRun,
+                        );
+                    }}
+                    options={{
+                        fontSize: 14,
+                        minimap: { enabled: false },
+                        lineNumbers: "on",
+                        scrollBeyondLastLine: false,
+                        wordWrap: "on",
+                        padding: { top: 12, bottom: 12 },
+                        renderLineHighlight: "none",
+                        overviewRulerLanes: 0,
+                    }}
+                />
+            </div>
         </div>
     );
 }

@@ -12,9 +12,6 @@
     --border: #2a2d3a;
     --text: #e2e8f0;
     --muted: #64748b;
-    --slow: #ef4444;
-    --warn: #f59e0b;
-    --ok: #22c55e;
     --blue: #3b82f6;
 }
 
@@ -25,16 +22,23 @@ body {
     font-size: 14px;
 }
 
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ResizableSplit uses 100% inline styles — no CSS needed */
+
+/* ── Node hover glow ── */
+.nd:hover rect.nd-body {
+    stroke: #60a5fa !important;
+    stroke-width: 1.5 !important;
 }
 
-::-webkit-scrollbar-track {
-    background: var(--surface);
+/* ── Animations ── */
+@keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
 }
-
-::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 3px;
+@keyframes slideUp {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
