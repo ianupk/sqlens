@@ -250,7 +250,7 @@ def run_demo(db_path: str) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run the SQL optimizer demo.")
+    parser = argparse.ArgumentParser(description="Run the SQLens demo.")
     parser.add_argument(
         "--db",
         default=os.getenv("SQLITE_PATH", "./demo.db"),

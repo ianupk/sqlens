@@ -1,5 +1,5 @@
 def main():
-    print("Hello from sql-optimizer-mcp!")
+    print("Hello from sqlens!")
 
 
 if __name__ == "__main__":

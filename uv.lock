@@ -976,7 +976,7 @@ wheels = [
 ]
 
 [[package]]
-name = "sql-optimizer-mcp"
+name = "sqlens"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

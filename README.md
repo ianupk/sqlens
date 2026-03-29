@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="SQL Optimizer MCP Server" width="800" />
+  <img src="assets/banner.svg" alt="SQLens" width="800" />
 </p>
 
 <p align="center">
@@ -8,16 +8,15 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-≥3.11-blue?logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/MCP-1.0-green?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+PHRleHQgeD0iNCIgeT0iMjAiIGZvbnQtc2l6ZT0iMjAiPuKalDwvdGV4dD48L3N2Zz4=" alt="MCP" />
+  <img src="https://img.shields.io/badge/MCP-1.0-green?logo=data:image/svg+xml;base64,PHN2ZyBmaWxsPSJ3aGl0ZSIgZmlsbC1ydWxlPSJldmVub2RkIiBoZWlnaHQ9IjFlbSIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMWVtIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik0xNS42ODggMi4zNDNhMi41ODggMi41ODggMCAwMC0zLjYxIDBsLTkuNjI2IDkuNDRhLjg2My44NjMgMCAwMS0xLjIwMyAwIC44MjMuODIzIDAgMDEwLTEuMThsOS42MjYtOS40NGE0LjMxMyA0LjMxMyAwIDAxNi4wMTYgMCA0LjExNiA0LjExNiAwIDAxMS4yMDQgMy41NCA0LjMgNC4zIDAgMDEzLjYwOSAxLjE4bC4wNS4wNWE0LjExNSA0LjExNSAwIDAxMCA1LjlsLTguNzA2IDguNTM3YS4yNzQuMjc0IDAgMDAwIC4zOTNsMS43ODggMS43NTRhLjgyMy44MjMgMCAwMTAgMS4xOC44NjMuODYzIDAgMDEtMS4yMDMgMGwtMS43ODgtMS43NTNhMS45MiAxLjkyIDAgMDEwLTIuNzU0bDguNzA2LTguNTM4YTIuNDcgMi40NyAwIDAwMC0zLjU0bC0uMDUtLjA0OWEyLjU4OCAyLjU4OCAwIDAwLTMuNjA3LS4wMDNsLTcuMTcyIDcuMDM0LS4wMDIuMDAyLS4wOTguMDk3YS44NjMuODYzIDAgMDEtMS4yMDQgMCAuODIzLjgyMyAwIDAxMC0xLjE4bDcuMjczLTcuMTMzYTIuNDcgMi40NyAwIDAwLS4wMDMtMy41Mzd6Ij48L3BhdGg+PHBhdGggZD0iTTE0LjQ4NSA0LjcwM2EuODIzLjgyMyAwIDAwMC0xLjE4Ljg2My44NjMgMCAwMC0xLjIwNCAwbC03LjExOSA2Ljk4MmE0LjExNSA0LjExNSAwIDAwMCA1LjkgNC4zMTQgNC4zMTQgMCAwMDYuMDE2IDBsNy4xMi02Ljk4MmEuODIzLjgyMyAwIDAwMC0xLjE4Ljg2My44NjMgMCAwMC0xLjIwNCAwbC03LjExOSA2Ljk4MmEyLjU4OCAyLjU4OCAwIDAxLTMuNjEgMCAyLjQ3IDIuNDcgMCAwMTAtMy41NGw3LjEyLTYuOTgyeiI+PC9wYXRoPjwvc3ZnPgo=" alt="MCP" />
   <img src="https://img.shields.io/badge/databases-postgres%20%7C%20sqlite%20%7C%20mysql-orange" alt="Databases" />
-  <img src="https://img.shields.io/badge/license-MIT-gray" alt="License" />
 </p>
 
 ---
 
 ## What is this?
 
-SQL Optimizer MCP is a [Model Context Protocol](https://modelcontextprotocol.io/) server that connects AI coding assistants (Cursor, VS Code Copilot, Claude Desktop) to a live database. The AI can then:
+SQLens is a [Model Context Protocol](https://modelcontextprotocol.io/) server that connects AI coding assistants (Cursor, VS Code Copilot, Claude Desktop) to a live database. The AI can then:
 
 - **Run read-only queries** and inspect results
 - **Analyze execution plans** with severity-based diagnostics (slow / warn / ok)
@@ -83,8 +82,8 @@ A Next.js frontend with:
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/ianupk/sql-optimizer-mcp.git
-cd sql-optimizer-mcp
+git clone https://github.com/ianupk/sqlens.git
+cd sqlens
 uv sync
 ```
 
@@ -145,11 +144,11 @@ Add to your `.cursor/mcp.json` or VS Code MCP settings:
 ```json
 {
   "mcpServers": {
-    "sql-optimizer": {
+    "sqlens": {
       "type": "stdio",
       "command": "uv",
       "args": ["run", "python", "-m", "mcp_server.server"],
-      "cwd": "/path/to/sql-optimizer-mcp",
+      "cwd": "/path/to/sqlens",
       "env": {
         "DB_TYPE": "sqlite",
         "SQLITE_PATH": "${workspaceFolder}/demo.db"
@@ -166,12 +165,12 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "sql-optimizer": {
+    "sqlens": {
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/sql-optimizer-mcp", "python", "-m", "mcp_server.server"],
+      "args": ["run", "--directory", "/path/to/sqlens", "python", "-m", "mcp_server.server"],
       "env": {
         "DB_TYPE": "sqlite",
-        "SQLITE_PATH": "/path/to/sql-optimizer-mcp/demo.db"
+        "SQLITE_PATH": "/path/to/sqlens/demo.db"
       }
     }
   }
@@ -209,7 +208,7 @@ Open **<http://localhost:3000>** — you'll see the SQL editor, table sidebar, a
 ## Architecture
 
 ```
-sql-optimizer-mcp/
+sqlens/
 ├── mcp_server/          # MCP server entry point (stdio transport)
 │   └── server.py        # Tool registration + system prompt
 ├── api/                 # REST API (FastAPI) for the web UI
@@ -280,8 +279,3 @@ Or paste a complex query in the web UI editor and click **Explain Plan** to see 
 | `MYSQL_PASSWORD` | If MySQL | — | MySQL password |
 | `MYSQL_DB` | If MySQL | — | MySQL database name |
 
----
-
-## License
-
-MIT

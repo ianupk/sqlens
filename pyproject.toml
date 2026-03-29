@@ -1,5 +1,5 @@
 [project]
-name = "sql-optimizer-mcp"
+name = "sqlens"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"

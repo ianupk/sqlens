@@ -174,7 +174,7 @@ export default function Home() {
                 borderBottom: "1px solid #2a2d3a",
                 gap: 12,
             }}>
-                <span style={{ fontWeight: 600, fontSize: 15 }}>SQL Optimizer</span>
+                <span style={{ fontWeight: 600, fontSize: 15 }}>SQLens</span>
                 <span style={{ color: "#64748b", fontSize: 12 }}>connected to demo.db</span>
             </div>
 

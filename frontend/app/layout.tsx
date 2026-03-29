@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "SQL Optimizer",
+    title: "SQLens",
     description: "Query explanation and index optimization",
 };
 

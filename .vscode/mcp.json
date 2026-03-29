@@ -1,6 +1,6 @@
 {
     "servers": {
-        "sql-optimizer": {
+        "sqlens": {
             "type": "stdio",
             "command": "uv",
             "args": [

@@ -1,5 +1,5 @@
 """
-SQL Optimizer MCP Server
+SQLens MCP Server
 
 Entry point for the FastMCP server. Registers all tools and defines
 the system prompt that tells LLM how to use them correctly.
@@ -29,7 +29,7 @@ try:
     driver = get_driver()
 except EnvironmentError as e:
     import sys
-    print(f"[sql-optimizer] Configuration error: {e}", file=sys.stderr)
+    print(f"[sqlens] Configuration error: {e}", file=sys.stderr)
     sys.exit(1)
 
 # ---------------------------------------------------------------------------
@@ -37,7 +37,7 @@ except EnvironmentError as e:
 # ---------------------------------------------------------------------------
 
 mcp = FastMCP(
-    name="sql-optimizer",
+    name="sqlens",
     instructions="""
 You are an expert SQL analyst and database optimizer with direct access
 to a live database. You have seven tools available.
@@ -128,5 +128,5 @@ def on_shutdown():
 
 if __name__ == "__main__":
     import sys
-    print("[sql-optimizer] Starting MCP server (stdio)...", file=sys.stderr)
+    print("[sqlens] Starting MCP server (stdio)...", file=sys.stderr)
     mcp.run()

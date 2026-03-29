@@ -4,8 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.routes import query, schema, optimizer, audit
 
 app = FastAPI(
-    title="SQL Optimizer API",
-    description="HTTP interface to the SQL Optimizer MCP tools.",
+    title="SQLens API",
+    description="HTTP interface to the SQLens MCP tools.",
     version="0.1.0",
 )
 
@@ -25,7 +25,7 @@ app.include_router(audit.router)
 @app.get("/")
 def root():
     return {
-        "name":    "sql-optimizer",
+        "name":    "sqlens",
         "version": "0.1.0",
         "docs":    "/docs",
     }
